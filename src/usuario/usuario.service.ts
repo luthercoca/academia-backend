@@ -52,6 +52,7 @@ export class UsuarioService {
     const result = await paginate(this.prisma.usuario, {
       where: {
         rol: query.rol,
+        activo: query.activo,
         // Email y nombre de la persona vinculada (estudiante o docente).
         ...porPalabras<Prisma.UsuarioWhereInput>(query.q, (p) => [
           { email: { contains: p } },
