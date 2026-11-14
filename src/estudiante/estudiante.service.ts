@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { paginate } from '../common/pagination.util.js';
@@ -10,6 +10,28 @@ import { UpdateEstudianteDto } from './dto/update-estudiante.dto.js';
 import { EstudianteQueryDto } from './dto/estudiante-query.dto.js';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
 import { porPalabras } from '../common/busqueda.util.js';
+
+const PRISMA_UNIQUE_CONSTRAINT = 'P2002';
+const REINTENTOS_CODIGO = 5;
+
+/** Campo único que chocó ('codigo' | 'documento' | 'otro'), o null si no es un error de duplicado. */
+function campoDuplicado(e: unknown): 'codigo' | 'documento' | 'otro' | null {
+  const error = e as { code?: string; meta?: { target?: unknown; driverAdapterError?: { cause?: unknown } } };
+  if (error?.code !== PRISMA_UNIQUE_CONSTRAINT) return null;
+  const pista = JSON.stringify([error.meta?.target, error.meta?.driverAdapterError?.cause]);
+  if (pista.includes('documento')) return 'documento';
+  if (pista.includes('codigo')) return 'codigo';
+  return 'otro';
+}
+
+/** Traduce un duplicado a 409 con un mensaje claro; cualquier otro error sigue igual. */
+function comoConflicto(e: unknown): unknown {
+  const campo = campoDuplicado(e);
+  if (campo === 'documento') return new ConflictException('Ya existe un estudiante con ese documento');
+  if (campo === 'codigo') return new ConflictException('Ya existe un estudiante con ese código');
+  if (campo === 'otro') return new ConflictException('Ya existe un estudiante con esos datos');
+  return e;
+}
 
 const SORTABLE_FIELDS = new Set([
   'id',
@@ -27,12 +49,38 @@ export class EstudianteService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateEstudianteDto) {
-    return this.prisma.estudiante.create({
-      data: {
-        ...dto,
-        fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : undefined,
-      },
-    });
+    const data = {
+      ...dto,
+      fechaNacimiento: dto.fechaNacimiento ? new Date(dto.fechaNacimiento) : undefined,
+    };
+    if (dto.codigo) {
+      try {
+        return await this.prisma.estudiante.create({ data: { ...data, codigo: dto.codigo } });
+      } catch (e) {
+        throw comoConflicto(e);
+      }
+    }
+
+    // Código automático: varias personas pueden inscribir a la vez, así que se calcula
+    // en el momento de guardar y, si otro lo tomó justo antes, se reintenta con el siguiente.
+    for (let intento = 0; ; intento++) {
+      const codigo = await this.siguienteCodigo();
+      try {
+        return await this.prisma.estudiante.create({ data: { ...data, codigo } });
+      } catch (e) {
+        // Solo se reintenta si chocó el código (un documento repetido se informa tal cual).
+        if (campoDuplicado(e) !== 'codigo' || intento >= REINTENTOS_CODIGO) throw comoConflicto(e);
+      }
+    }
+  }
+
+  /** Siguiente código EST-#### a partir del mayor número ya usado (mínimo 4 cifras). */
+  private async siguienteCodigo(): Promise<string> {
+    const [fila] = await this.prisma.$queryRaw<{ mayor: bigint | number | null }[]>`
+      SELECT MAX(CAST(SUBSTRING(codigo, 5) AS UNSIGNED)) AS mayor
+      FROM estudiantes WHERE codigo REGEXP '^EST-[0-9]+$'`;
+    const siguiente = Number(fila?.mayor ?? 0) + 1;
+    return `EST-${String(siguiente).padStart(4, '0')}`;
   }
 
   async findAll(query: EstudianteQueryDto) {

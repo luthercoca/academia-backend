@@ -17,6 +17,7 @@ describe('EstudianteService', () => {
     inscripcion: {
       count: vi.fn(),
     },
+    $queryRaw: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -57,6 +58,54 @@ describe('EstudianteService', () => {
       prisma.estudiante.create.mockRejectedValue(uniqueError);
 
       await expect(service.create(dto as never)).rejects.toThrow();
+    });
+
+    const sinCodigo = { nombres: 'Ana', apellidos: 'Rojas', documento: '555' };
+    const echo = ({ data }: { data: object }) => Promise.resolve({ id: 7, ...data });
+
+    it('assigns the next EST-#### code when none is sent', async () => {
+      prisma.$queryRaw.mockResolvedValue([{ mayor: 200n }]);
+      prisma.estudiante.create.mockImplementation(echo);
+
+      const result = await service.create(sinCodigo as never);
+
+      expect(result).toMatchObject({ codigo: 'EST-0201', nombres: 'Ana' });
+    });
+
+    it('starts at EST-0001 when there are no students', async () => {
+      prisma.$queryRaw.mockResolvedValue([{ mayor: null }]);
+      prisma.estudiante.create.mockImplementation(echo);
+
+      await expect(service.create(sinCodigo as never)).resolves.toMatchObject({ codigo: 'EST-0001' });
+    });
+
+    it('retries with the next code when two people save at the same time', async () => {
+      prisma.$queryRaw.mockResolvedValueOnce([{ mayor: 200 }]).mockResolvedValueOnce([{ mayor: 201 }]);
+      prisma.estudiante.create
+        .mockRejectedValueOnce(Object.assign(new Error('Unique'), { code: 'P2002', meta: { target: ['codigo'] } }))
+        .mockImplementationOnce(echo);
+
+      const result = await service.create(sinCodigo as never);
+
+      expect(result).toMatchObject({ codigo: 'EST-0202' });
+      expect(prisma.estudiante.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not retry when the duplicate is the documento', async () => {
+      prisma.$queryRaw.mockResolvedValue([{ mayor: 5 }]);
+      prisma.estudiante.create.mockRejectedValue(
+        Object.assign(new Error('Unique'), { code: 'P2002', meta: { target: ['documento'] } }),
+      );
+
+      await expect(service.create(sinCodigo as never)).rejects.toThrow('Ya existe un estudiante con ese documento');
+      expect(prisma.estudiante.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the code typed by the user', async () => {
+      prisma.estudiante.create.mockImplementation(echo);
+
+      await expect(service.create({ ...sinCodigo, codigo: 'X-1' } as never)).resolves.toMatchObject({ codigo: 'X-1' });
+      expect(prisma.$queryRaw).not.toHaveBeenCalled();
     });
   });
 

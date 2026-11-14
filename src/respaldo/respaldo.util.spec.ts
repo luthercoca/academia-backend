@@ -9,7 +9,7 @@ import {
 } from './respaldo.util.js';
 
 const vacias = () =>
-  Object.fromEntries(TABLAS.map((t) => [t, []])) as Record<
+  Object.fromEntries(TABLAS.map((t) => [t, []])) as unknown as Record<
     Tabla,
     Record<string, unknown>[]
   >;

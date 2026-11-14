@@ -10,10 +10,14 @@ import {
 } from 'class-validator';
 
 export class CreateEstudianteDto {
-  @ApiProperty({ example: 'EST-0001' })
+  @ApiPropertyOptional({
+    example: 'EST-0001',
+    description: 'Si no se envía, el servidor asigna el siguiente (EST-0001, EST-0002…).',
+  })
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  codigo!: string;
+  codigo?: string;
 
   @ApiProperty({ example: 'Juan' })
   @IsString()
