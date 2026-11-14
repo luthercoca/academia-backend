@@ -6,6 +6,7 @@ import {
   empaquetar,
   RespaldoInvalidoError,
   TABLAS,
+  TABLAS_DEPENDIENTES,
   type Tabla,
 } from './respaldo.util.js';
 
@@ -84,7 +85,10 @@ export class RespaldoService {
           const incluidas = TABLAS.filter(
             (t) => archivo.tablas[t] !== undefined,
           );
-          for (const t of [...incluidas].reverse())
+          const aVaciar = TABLAS.filter(
+            (t) => incluidas.includes(t) || TABLAS_DEPENDIENTES.includes(t),
+          );
+          for (const t of [...aVaciar].reverse())
             await this.delegado(tx, t).deleteMany();
           for (const t of incluidas) {
             const filas =

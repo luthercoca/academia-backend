@@ -10,6 +10,7 @@ export const RECURSOS_BITACORA = [
   'periodos-academicos',
   'inscripciones',
   'calificaciones',
+  'asignaciones-docentes',
   'configuracion',
 ] as const;
 
@@ -81,6 +82,14 @@ export function describirRegistro(respuesta: unknown, cuerpo: unknown): string {
     p && texto(p.nombres) && texto(p.apellidos)
       ? `${texto(p.nombres)} ${texto(p.apellidos)}`
       : null;
+
+  // Asignación docente: «Ana García · Matemática en 3ro Secundaria A (Gestión 2026)».
+  if (r.docente && r.materia && r.curso) {
+    const periodo = texto((r.periodoAcademico as Registro)?.nombre);
+    const asignacion = `${persona(r.docente as Registro) ?? 'Docente'} · ${texto((r.materia as Registro)?.nombre) ?? 'Materia'} en ${texto((r.curso as Registro)?.nombre) ?? 'curso'}${periodo ? ` (${periodo})` : ''}`;
+    const estadoAsig = texto((cuerpo as Registro)?.estado);
+    return (estadoAsig ? `${asignacion} → ${estadoAsig}` : asignacion).slice(0, 255);
+  }
 
   let base =
     persona(r) ??

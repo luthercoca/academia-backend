@@ -34,6 +34,11 @@ enum EstadoPeriodo {
   FINALIZADO
 }
 
+enum EstadoAsignacion {
+  ACTIVA
+  INACTIVA
+}
+
 enum EstadoInscripcion {
   ACTIVA
   RETIRADA
@@ -88,6 +93,7 @@ model Docente {
 
   calificaciones Calificacion[]
   usuario        Usuario?
+  asignaciones   AsignacionDocente[]
 
   @@map("docentes")
 }
@@ -103,6 +109,7 @@ model Curso {
   updatedAt DateTime    @updatedAt
 
   inscripciones Inscripcion[]
+  asignaciones  AsignacionDocente[]
 
   @@map("cursos")
 }
@@ -118,6 +125,7 @@ model Materia {
   updatedAt      DateTime      @updatedAt
 
   calificaciones Calificacion[]
+  asignaciones   AsignacionDocente[]
 
   @@map("materias")
 }
@@ -132,8 +140,32 @@ model PeriodoAcademico {
   updatedAt   DateTime      @updatedAt
 
   inscripciones Inscripcion[]
+  asignaciones  AsignacionDocente[]
 
   @@map("periodos_academicos")
+}
+
+/// Qué materia imparte cada docente, en qué curso y en qué período académico.
+/// Un docente puede tener varias; una misma materia+curso+período tiene un solo docente ACTIVO (lo valida el servicio).
+model AsignacionDocente {
+  id                 Int              @id @default(autoincrement())
+  docenteId          Int
+  materiaId          Int
+  cursoId            Int
+  periodoAcademicoId Int
+  estado             EstadoAsignacion @default(ACTIVA)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  docente          Docente          @relation(fields: [docenteId], references: [id])
+  materia          Materia          @relation(fields: [materiaId], references: [id])
+  curso            Curso            @relation(fields: [cursoId], references: [id])
+  periodoAcademico PeriodoAcademico @relation(fields: [periodoAcademicoId], references: [id])
+
+  @@unique([docenteId, materiaId, cursoId, periodoAcademicoId], map: "asignacion_docente_unica")
+  @@index([materiaId, cursoId, periodoAcademicoId], map: "asignacion_materia_curso_periodo_idx")
+  @@index([cursoId, periodoAcademicoId], map: "asignacion_curso_periodo_idx")
+  @@map("asignaciones_docentes")
 }
 
 model Inscripcion {

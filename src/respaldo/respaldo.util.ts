@@ -14,6 +14,7 @@ export const TABLAS = [
   'materia',
   'docente',
   'estudiante',
+  'asignacionDocente',
   'inscripcion',
   'calificacion',
   'usuario',
@@ -23,7 +24,13 @@ export const TABLAS = [
 export type Tabla = (typeof TABLAS)[number];
 
 /** Tablas que un respaldo más antiguo puede no traer: si faltan, al restaurar se dejan como están. */
-export const TABLAS_OPCIONALES: readonly Tabla[] = ['configuracion'];
+export const TABLAS_OPCIONALES: readonly Tabla[] = ['configuracion', 'asignacionDocente'];
+
+/**
+ * Opcionales que dependen de otras tablas: si el respaldo no las trae, igual se vacían al restaurar
+ * (si no, quedarían apuntando a docentes, cursos o materias que ya no existen).
+ */
+export const TABLAS_DEPENDIENTES: readonly Tabla[] = ['asignacionDocente'];
 
 export interface ArchivoRespaldo {
   version: number;

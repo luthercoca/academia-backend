@@ -36,8 +36,9 @@ export class EstudianteController {
 
   @Roles('ADMIN', 'DOCENTE')
   @Get()
-  findAll(@Query() query: EstudianteQueryDto) {
-    return this.service.findAll(query);
+  findAll(@Query() query: EstudianteQueryDto, @CurrentUser() user: AuthUser) {
+    // Un docente solo ve a los estudiantes de los cursos que tiene asignados.
+    return this.service.findAll(query, user.rol === 'DOCENTE' ? (user.docenteId ?? -1) : undefined);
   }
 
   @Get(':id')

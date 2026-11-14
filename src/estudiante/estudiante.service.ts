@@ -83,8 +83,18 @@ export class EstudianteService {
     return `EST-${String(siguiente).padStart(4, '0')}`;
   }
 
-  async findAll(query: EstudianteQueryDto) {
+  async findAll(query: EstudianteQueryDto, docenteId?: number) {
+    const cursosDelDocente = docenteId
+      ? await this.prisma.asignacionDocente.findMany({
+          where: { docenteId, estado: 'ACTIVA' },
+          select: { cursoId: true, periodoAcademicoId: true },
+          distinct: ['cursoId', 'periodoAcademicoId'],
+        })
+      : null;
     const where: Prisma.EstudianteWhereInput = {
+      inscripciones: cursosDelDocente
+        ? { some: { OR: cursosDelDocente.length ? cursosDelDocente : [{ id: -1 }] } }
+        : undefined,
       estado: query.estado,
       // «nombre» (compatibilidad): solo nombres y apellidos.
       OR: query.nombre && !query.q

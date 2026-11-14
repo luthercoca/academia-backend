@@ -19,6 +19,8 @@ import { MateriaQueryDto } from './dto/materia-query.dto.js';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
 import { sendRemovalResponse } from '../common/remove-response.util.js';
 import { Roles } from '../auth/roles.decorator.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
+import type { AuthUser } from '../auth/auth.types.js';
 
 @ApiTags('Materias')
 @Controller('materias')
@@ -32,8 +34,9 @@ export class MateriaController {
   }
 
   @Get()
-  findAll(@Query() query: MateriaQueryDto) {
-    return this.service.findAll(query);
+  findAll(@Query() query: MateriaQueryDto, @CurrentUser() user: AuthUser) {
+    // Un docente solo ve las materias que tiene asignadas.
+    return this.service.findAll(query, user.rol === 'DOCENTE' ? (user.docenteId ?? -1) : undefined);
   }
 
   @Get(':id')

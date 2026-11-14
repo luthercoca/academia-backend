@@ -20,20 +20,26 @@ import { ForbiddenException } from '@nestjs/common';
 import { Roles } from '../auth/roles.decorator.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 import type { AuthUser } from '../auth/auth.types.js';
+import { AsignacionDocenteService } from '../asignacion-docente/asignacion-docente.service.js';
 
 const NOT_YOURS = 'Solo puede acceder a sus propias calificaciones';
 
 @ApiTags('Calificaciones')
 @Controller('calificaciones')
 export class CalificacionController {
-  constructor(private readonly service: CalificacionService) {}
+  constructor(
+    private readonly service: CalificacionService,
+    private readonly asignaciones: AsignacionDocenteService,
+  ) {}
 
   @Roles('ADMIN', 'DOCENTE')
   @Post()
-  create(@Body() dto: CreateCalificacionDto, @CurrentUser() user: AuthUser) {
+  async create(@Body() dto: CreateCalificacionDto, @CurrentUser() user: AuthUser) {
     if (user.rol === 'DOCENTE') {
       this.assertOwnDocente(user, dto.docenteId);
       dto.docenteId = user.docenteId ?? undefined;
+      // Solo las materias que tiene asignadas en el curso y período de la inscripción.
+      await this.asignaciones.asegurarQuePuedeCalificar(user.docenteId ?? -1, dto.inscripcionId, dto.materiaId);
     }
     return this.service.create(dto);
   }

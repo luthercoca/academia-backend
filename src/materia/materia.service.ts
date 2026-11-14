@@ -20,8 +20,9 @@ export class MateriaService {
     return this.prisma.materia.create({ data: dto });
   }
 
-  async findAll(query: MateriaQueryDto) {
+  async findAll(query: MateriaQueryDto, docenteId?: number) {
     const where: Prisma.MateriaWhereInput = {
+      asignaciones: docenteId ? { some: { docenteId, estado: 'ACTIVA' } } : undefined,
       estado: query.estado,
       nombre: query.nombre ? { contains: query.nombre } : undefined,
       ...porPalabras<Prisma.MateriaWhereInput>(query.q, (p) => [

@@ -34,8 +34,9 @@ export class CursoService {
     return this.prisma.curso.create({ data: dto });
   }
 
-  async findAll(query: CursoQueryDto) {
+  async findAll(query: CursoQueryDto, docenteId?: number) {
     const where: Prisma.CursoWhereInput = {
+      asignaciones: docenteId ? { some: { docenteId, estado: 'ACTIVA' } } : undefined,
       estado: query.estado,
       nivel: query.nivel,
       nombre: query.nombre ? { contains: query.nombre } : undefined,
@@ -114,8 +115,12 @@ export class CursoService {
   async findMaterias(cursoId: number, query: PaginationQueryDto) {
     await this.assertExists(cursoId);
 
+    // Las asignadas al curso (aunque aún no tengan notas) y las que ya tienen notas en él.
     const where: Prisma.MateriaWhereInput = {
-      calificaciones: { some: { inscripcion: { cursoId } } },
+      OR: [
+        { asignaciones: { some: { cursoId, estado: 'ACTIVA' } } },
+        { calificaciones: { some: { inscripcion: { cursoId } } } },
+      ],
     };
 
     return paginate(this.prisma.materia, {

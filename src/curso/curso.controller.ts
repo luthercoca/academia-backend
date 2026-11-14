@@ -19,6 +19,8 @@ import { CursoQueryDto } from './dto/curso-query.dto.js';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
 import { sendRemovalResponse } from '../common/remove-response.util.js';
 import { Roles } from '../auth/roles.decorator.js';
+import { CurrentUser } from '../auth/current-user.decorator.js';
+import type { AuthUser } from '../auth/auth.types.js';
 
 @ApiTags('Cursos')
 @Controller('cursos')
@@ -32,8 +34,9 @@ export class CursoController {
   }
 
   @Get()
-  findAll(@Query() query: CursoQueryDto) {
-    return this.service.findAll(query);
+  findAll(@Query() query: CursoQueryDto, @CurrentUser() user: AuthUser) {
+    // Un docente solo ve los cursos que tiene asignados.
+    return this.service.findAll(query, user.rol === 'DOCENTE' ? (user.docenteId ?? -1) : undefined);
   }
 
   @Get(':id')

@@ -20,6 +20,7 @@ import { BitacoraModule } from './bitacora/bitacora.module.js';
 import { RespaldoModule } from './respaldo/respaldo.module.js';
 import { ConfiguracionModule } from './configuracion/configuracion.module.js';
 import { SaludModule } from './salud/salud.module.js';
+import { AsignacionDocenteModule } from './asignacion-docente/asignacion-docente.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -53,6 +54,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     RespaldoModule,
     ConfiguracionModule,
     SaludModule,
+    AsignacionDocenteModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
