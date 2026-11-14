@@ -8,8 +8,16 @@ async function bootstrap() {
     instrument: ObserveInstrument,
   });
 
+  // Además de localhost, las direcciones publicadas del frontend (Render), separadas por comas en CORS_ORIGINS.
+  const origenesPublicados = (process.env.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((o) => o.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
   app.enableCors({
-    origin: /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/,
+    origin: [
+      /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/,
+      ...origenesPublicados,
+    ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
