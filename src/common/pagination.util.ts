@@ -48,11 +48,6 @@ export async function paginate<T, Where, OrderBy, Include = never>(
 
   return {
     data,
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: total === 0 ? 0 : Math.ceil(total / limit),
-    },
+    meta: { page, limit, total, totalPages: total === 0 ? 0 : Math.ceil(total / limit) },
   };
 }

@@ -1,5 +1,6 @@
 export type RemovalOutcome<T> =
-  { kind: 'deactivated'; entity: T } | { kind: 'deleted' };
+  | { kind: 'deactivated'; entity: T }
+  | { kind: 'deleted' };
 
 /**
  * Shared decision: entities with dependent records are deactivated
