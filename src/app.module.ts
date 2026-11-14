@@ -21,6 +21,8 @@ import { RespaldoModule } from './respaldo/respaldo.module.js';
 import { ConfiguracionModule } from './configuracion/configuracion.module.js';
 import { SaludModule } from './salud/salud.module.js';
 import { AsignacionDocenteModule } from './asignacion-docente/asignacion-docente.module.js';
+import { AulaModule } from './aula/aula.module.js';
+import { HorarioModule } from './horario/horario.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -55,6 +57,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     ConfiguracionModule,
     SaludModule,
     AsignacionDocenteModule,
+    AulaModule,
+    HorarioModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

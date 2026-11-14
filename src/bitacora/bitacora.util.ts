@@ -11,6 +11,8 @@ export const RECURSOS_BITACORA = [
   'inscripciones',
   'calificaciones',
   'asignaciones-docentes',
+  'aulas',
+  'horarios',
   'configuracion',
 ] as const;
 
@@ -67,6 +69,15 @@ export function accionBitacora(
 
 type Registro = Record<string, unknown> | null | undefined;
 
+const DIAS: Record<string, string> = {
+  LUNES: 'Lunes',
+  MARTES: 'Martes',
+  MIERCOLES: 'Miércoles',
+  JUEVES: 'Jueves',
+  VIERNES: 'Viernes',
+  SABADO: 'Sábado',
+};
+
 const texto = (v: unknown) =>
   typeof v === 'string' && v.trim() ? v.trim() : null;
 
@@ -82,6 +93,20 @@ export function describirRegistro(respuesta: unknown, cuerpo: unknown): string {
     p && texto(p.nombres) && texto(p.apellidos)
       ? `${texto(p.nombres)} ${texto(p.apellidos)}`
       : null;
+
+  // Horario: «Matemática · 3ro Secundaria A · Lunes 08:00–08:45 · Aula 101».
+  if (r.asignacion && typeof r.diaSemana === 'string') {
+    const a = r.asignacion as Record<string, unknown>;
+    const dia = DIAS[r.diaSemana] ?? r.diaSemana;
+    const partes = [
+      texto((a.materia as Registro)?.nombre),
+      texto((a.curso as Registro)?.nombre),
+      `${dia} ${texto(r.horaInicio) ?? ''}–${texto(r.horaFin) ?? ''}`,
+      texto((r.aula as Registro)?.nombre),
+    ].filter(Boolean);
+    const estadoHorario = texto((cuerpo as Registro)?.estado);
+    return `${partes.join(' · ')}${estadoHorario ? ` → ${estadoHorario}` : ''}`.slice(0, 255);
+  }
 
   // Asignación docente: «Ana García · Matemática en 3ro Secundaria A (Gestión 2026)».
   if (r.docente && r.materia && r.curso) {

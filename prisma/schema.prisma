@@ -34,6 +34,25 @@ enum EstadoPeriodo {
   FINALIZADO
 }
 
+enum EstadoAula {
+  ACTIVA
+  INACTIVA
+}
+
+enum EstadoHorario {
+  ACTIVO
+  INACTIVO
+}
+
+enum DiaSemana {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+}
+
 enum EstadoAsignacion {
   ACTIVA
   INACTIVA
@@ -161,11 +180,49 @@ model AsignacionDocente {
   materia          Materia          @relation(fields: [materiaId], references: [id])
   curso            Curso            @relation(fields: [cursoId], references: [id])
   periodoAcademico PeriodoAcademico @relation(fields: [periodoAcademicoId], references: [id])
+  horarios         Horario[]
 
   @@unique([docenteId, materiaId, cursoId, periodoAcademicoId], map: "asignacion_docente_unica")
   @@index([materiaId, cursoId, periodoAcademicoId], map: "asignacion_materia_curso_periodo_idx")
   @@index([cursoId, periodoAcademicoId], map: "asignacion_curso_periodo_idx")
   @@map("asignaciones_docentes")
+}
+
+/// Ambientes donde se pasan clases (aula, laboratorio, sala…).
+model Aula {
+  id        Int        @id @default(autoincrement())
+  codigo    String     @unique
+  nombre    String
+  capacidad Int?
+  ubicacion String?
+  estado    EstadoAula @default(ACTIVA)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  horarios Horario[]
+
+  @@map("aulas")
+}
+
+/// Un bloque del horario semanal: la asignación (materia + docente + curso/paralelo + período) en un aula, un día y un rango de horas.
+/// Horas en texto «HH:MM» (24 h). El servicio impide cruces de aula, docente y curso.
+model Horario {
+  id           Int           @id @default(autoincrement())
+  asignacionId Int
+  aulaId       Int
+  diaSemana    DiaSemana
+  horaInicio   String        @db.VarChar(5)
+  horaFin      String        @db.VarChar(5)
+  estado       EstadoHorario @default(ACTIVO)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  asignacion AsignacionDocente @relation(fields: [asignacionId], references: [id])
+  aula       Aula              @relation(fields: [aulaId], references: [id])
+
+  @@index([aulaId, diaSemana], map: "horario_aula_dia_idx")
+  @@index([asignacionId], map: "horario_asignacion_idx")
+  @@map("horarios")
 }
 
 model Inscripcion {

@@ -4,6 +4,8 @@ export async function cleanDatabase(prisma: PrismaService) {
   await prisma.bitacora.deleteMany();
   await prisma.usuario.deleteMany();
   await prisma.calificacion.deleteMany();
+  await prisma.horario.deleteMany();
+  await prisma.aula.deleteMany();
   await prisma.asignacionDocente.deleteMany();
   await prisma.inscripcion.deleteMany();
   await prisma.estudiante.deleteMany();
