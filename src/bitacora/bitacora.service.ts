@@ -3,6 +3,7 @@ import type { AccionBitacora, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { paginate } from '../common/pagination.util.js';
 import type { BitacoraQueryDto } from './dto/bitacora-query.dto.js';
+import { porPalabras } from '../common/busqueda.util.js';
 
 export interface NuevoRegistroBitacora {
   usuarioId: number | null;
@@ -35,6 +36,11 @@ export class BitacoraService {
       recurso: query.recurso,
       accion: query.accion,
       usuarioId: query.usuarioId,
+      ...porPalabras<Prisma.BitacoraWhereInput>(query.q, (p) => [
+        { descripcion: { contains: p } },
+        { recurso: { contains: p } },
+        { usuario: { email: { contains: p } } },
+      ]),
       fecha:
         query.desde || query.hasta
           ? {

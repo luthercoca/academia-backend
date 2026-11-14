@@ -9,10 +9,10 @@ import {
   IsOptional,
   Min,
 } from 'class-validator';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
+import { BusquedaQueryDto } from '../../common/dto/busqueda-query.dto.js';
 import { RECURSOS_BITACORA } from '../bitacora.util.js';
 
-export class BitacoraQueryDto extends PaginationQueryDto {
+export class BitacoraQueryDto extends BusquedaQueryDto {
   @ApiPropertyOptional({ enum: RECURSOS_BITACORA })
   @IsOptional()
   @IsIn(RECURSOS_BITACORA)

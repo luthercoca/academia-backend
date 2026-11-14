@@ -11,6 +11,7 @@ import { CALIFICACION_INCLUDE } from './calificacion.include.js';
 import { CreateCalificacionDto, NOTA_MAX, NOTA_MIN } from './dto/create-calificacion.dto.js';
 import { UpdateCalificacionDto } from './dto/update-calificacion.dto.js';
 import { CalificacionQueryDto } from './dto/calificacion-query.dto.js';
+import { porPalabras, comoNumero } from '../common/busqueda.util.js';
 
 const SORTABLE_FIELDS = new Set(['id', 'nota', 'tipo', 'fecha', 'createdAt']);
 
@@ -89,6 +90,20 @@ export class CalificacionService {
               lte: query.fechaHasta ? new Date(query.fechaHasta) : undefined,
             }
           : undefined,
+      // Estudiante, materia, docente, observación y la nota (si la palabra es un número).
+      ...porPalabras<Prisma.CalificacionWhereInput>(query.q, (p) => {
+        const nota = comoNumero(p);
+        return [
+          { inscripcion: { estudiante: { nombres: { contains: p } } } },
+          { inscripcion: { estudiante: { apellidos: { contains: p } } } },
+          { inscripcion: { estudiante: { codigo: { contains: p } } } },
+          { materia: { nombre: { contains: p } } },
+          { docente: { nombres: { contains: p } } },
+          { docente: { apellidos: { contains: p } } },
+          { observacion: { contains: p } },
+          ...(nota === undefined ? [] : [{ nota }]),
+        ];
+      }),
     };
 
     const sortBy = query.sortBy && SORTABLE_FIELDS.has(query.sortBy) ? query.sortBy : 'id';

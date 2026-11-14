@@ -112,7 +112,7 @@ export function describirConfiguracion(
   metodo: string,
   subruta: string | null,
   respuesta: unknown,
-  cuerpo?: unknown,
+  _cuerpo?: unknown,
 ): string {
   if (subruta === 'despertador') {
     if (metodo.toUpperCase() === 'POST') return 'Despertador: prueba manual';

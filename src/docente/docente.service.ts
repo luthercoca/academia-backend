@@ -8,6 +8,7 @@ import { CreateDocenteDto } from './dto/create-docente.dto.js';
 import { UpdateDocenteDto } from './dto/update-docente.dto.js';
 import { DocenteQueryDto } from './dto/docente-query.dto.js';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
+import { porPalabras } from '../common/busqueda.util.js';
 
 const SORTABLE_FIELDS = new Set(['id', 'codigo', 'nombres', 'apellidos', 'estado']);
 
@@ -28,6 +29,13 @@ export class DocenteService {
             { apellidos: { contains: query.nombre } },
           ]
         : undefined,
+      ...porPalabras<Prisma.DocenteWhereInput>(query.q, (p) => [
+        { nombres: { contains: p } },
+        { apellidos: { contains: p } },
+        { codigo: { contains: p } },
+        { email: { contains: p } },
+        { telefono: { contains: p } },
+      ]),
     };
 
     const sortBy = query.sortBy && SORTABLE_FIELDS.has(query.sortBy) ? query.sortBy : 'id';

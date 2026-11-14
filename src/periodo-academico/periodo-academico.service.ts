@@ -5,6 +5,7 @@ import { paginate } from '../common/pagination.util.js';
 import { CreatePeriodoAcademicoDto } from './dto/create-periodo-academico.dto.js';
 import { UpdatePeriodoAcademicoDto } from './dto/update-periodo-academico.dto.js';
 import { PeriodoAcademicoQueryDto } from './dto/periodo-academico-query.dto.js';
+import { porPalabras } from '../common/busqueda.util.js';
 
 const SORTABLE_FIELDS = new Set(['id', 'nombre', 'fechaInicio', 'fechaFin', 'estado']);
 
@@ -28,6 +29,7 @@ export class PeriodoAcademicoService {
   async findAll(query: PeriodoAcademicoQueryDto) {
     const where: Prisma.PeriodoAcademicoWhereInput = {
       estado: query.estado,
+      ...porPalabras<Prisma.PeriodoAcademicoWhereInput>(query.q, (p) => [{ nombre: { contains: p } }]),
     };
 
     const sortBy = query.sortBy && SORTABLE_FIELDS.has(query.sortBy) ? query.sortBy : 'id';

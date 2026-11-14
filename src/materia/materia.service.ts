@@ -8,6 +8,7 @@ import { CreateMateriaDto } from './dto/create-materia.dto.js';
 import { UpdateMateriaDto } from './dto/update-materia.dto.js';
 import { MateriaQueryDto } from './dto/materia-query.dto.js';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
+import { porPalabras } from '../common/busqueda.util.js';
 
 const SORTABLE_FIELDS = new Set(['id', 'codigo', 'nombre', 'estado']);
 
@@ -23,6 +24,11 @@ export class MateriaService {
     const where: Prisma.MateriaWhereInput = {
       estado: query.estado,
       nombre: query.nombre ? { contains: query.nombre } : undefined,
+      ...porPalabras<Prisma.MateriaWhereInput>(query.q, (p) => [
+        { nombre: { contains: p } },
+        { codigo: { contains: p } },
+        { descripcion: { contains: p } },
+      ]),
     };
 
     const sortBy = query.sortBy && SORTABLE_FIELDS.has(query.sortBy) ? query.sortBy : 'id';

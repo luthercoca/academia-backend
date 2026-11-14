@@ -10,6 +10,7 @@ import { paginate } from '../common/pagination.util.js';
 import { CreateInscripcionDto } from './dto/create-inscripcion.dto.js';
 import { UpdateInscripcionDto } from './dto/update-inscripcion.dto.js';
 import { InscripcionQueryDto } from './dto/inscripcion-query.dto.js';
+import { porPalabras } from '../common/busqueda.util.js';
 
 const SORTABLE_FIELDS = new Set(['id', 'fechaInscripcion', 'estado', 'createdAt']);
 
@@ -113,6 +114,14 @@ export class InscripcionService {
       cursoId: query.cursoId,
       periodoAcademicoId: query.periodoAcademicoId,
       estado: query.estado,
+      ...porPalabras<Prisma.InscripcionWhereInput>(query.q, (p) => [
+        { estudiante: { nombres: { contains: p } } },
+        { estudiante: { apellidos: { contains: p } } },
+        { estudiante: { codigo: { contains: p } } },
+        { estudiante: { documento: { contains: p } } },
+        { curso: { nombre: { contains: p } } },
+        { periodoAcademico: { nombre: { contains: p } } },
+      ]),
     };
 
     const sortBy = query.sortBy && SORTABLE_FIELDS.has(query.sortBy) ? query.sortBy : 'id';

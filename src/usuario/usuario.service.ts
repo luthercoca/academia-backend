@@ -12,6 +12,7 @@ import type { AuthUser } from '../auth/auth.types.js';
 import { CreateUsuarioDto } from './dto/create-usuario.dto.js';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto.js';
 import { UsuarioQueryDto } from './dto/usuario-query.dto.js';
+import { porPalabras } from '../common/busqueda.util.js';
 
 const SORTABLE_FIELDS = new Set(['id', 'email', 'rol', 'createdAt']);
 const PRISMA_UNIQUE_CONSTRAINT = 'P2002';
@@ -49,7 +50,17 @@ export class UsuarioService {
     const sortBy = query.sortBy && SORTABLE_FIELDS.has(query.sortBy) ? query.sortBy : 'id';
 
     const result = await paginate(this.prisma.usuario, {
-      where: { rol: query.rol },
+      where: {
+        rol: query.rol,
+        // Email y nombre de la persona vinculada (estudiante o docente).
+        ...porPalabras<Prisma.UsuarioWhereInput>(query.q, (p) => [
+          { email: { contains: p } },
+          { estudiante: { nombres: { contains: p } } },
+          { estudiante: { apellidos: { contains: p } } },
+          { docente: { nombres: { contains: p } } },
+          { docente: { apellidos: { contains: p } } },
+        ]),
+      },
       orderBy: { [sortBy]: query.order ?? 'asc' },
       page: query.page,
       limit: query.limit,

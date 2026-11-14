@@ -1,9 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { EstadoPeriodo } from '@prisma/client';
 import { IsEnum, IsOptional } from 'class-validator';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
+import { BusquedaQueryDto } from '../../common/dto/busqueda-query.dto.js';
 
-export class PeriodoAcademicoQueryDto extends PaginationQueryDto {
+export class PeriodoAcademicoQueryDto extends BusquedaQueryDto {
   @ApiPropertyOptional({ enum: EstadoPeriodo })
   @IsOptional()
   @IsEnum(EstadoPeriodo)

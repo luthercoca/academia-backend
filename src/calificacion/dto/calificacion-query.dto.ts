@@ -2,9 +2,9 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { TipoEvaluacion } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsDateString, IsEnum, IsInt, IsOptional, Min } from 'class-validator';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
+import { BusquedaQueryDto } from '../../common/dto/busqueda-query.dto.js';
 
-export class CalificacionQueryDto extends PaginationQueryDto {
+export class CalificacionQueryDto extends BusquedaQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)

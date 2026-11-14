@@ -7,6 +7,7 @@ import { CreateCursoDto } from './dto/create-curso.dto.js';
 import { UpdateCursoDto } from './dto/update-curso.dto.js';
 import { CursoQueryDto } from './dto/curso-query.dto.js';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
+import { porPalabras } from '../common/busqueda.util.js';
 
 const SORTABLE_FIELDS = new Set(['id', 'nombre', 'nivel', 'paralelo', 'capacidad', 'estado', 'createdAt']);
 
@@ -38,6 +39,11 @@ export class CursoService {
       estado: query.estado,
       nivel: query.nivel,
       nombre: query.nombre ? { contains: query.nombre } : undefined,
+      ...porPalabras<Prisma.CursoWhereInput>(query.q, (p) => [
+        { nombre: { contains: p } },
+        { nivel: { contains: p } },
+        { paralelo: { contains: p } },
+      ]),
     };
 
     const sortBy = query.sortBy && SORTABLE_FIELDS.has(query.sortBy) ? query.sortBy : 'id';

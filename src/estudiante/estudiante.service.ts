@@ -9,6 +9,7 @@ import { CreateEstudianteDto } from './dto/create-estudiante.dto.js';
 import { UpdateEstudianteDto } from './dto/update-estudiante.dto.js';
 import { EstudianteQueryDto } from './dto/estudiante-query.dto.js';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
+import { porPalabras } from '../common/busqueda.util.js';
 
 const SORTABLE_FIELDS = new Set([
   'id',
@@ -35,18 +36,20 @@ export class EstudianteService {
   }
 
   async findAll(query: EstudianteQueryDto) {
-    const search = query.q ?? query.nombre;
     const where: Prisma.EstudianteWhereInput = {
       estado: query.estado,
-      OR: search
-        ? [
-            { nombres: { contains: search } },
-            { apellidos: { contains: search } },
-            ...(query.q
-              ? [{ codigo: { contains: search } }, { documento: { contains: search } }]
-              : []),
-          ]
+      // «nombre» (compatibilidad): solo nombres y apellidos.
+      OR: query.nombre && !query.q
+        ? [{ nombres: { contains: query.nombre } }, { apellidos: { contains: query.nombre } }]
         : undefined,
+      // «q»: por contenido, palabra por palabra.
+      ...porPalabras<Prisma.EstudianteWhereInput>(query.q, (p) => [
+        { nombres: { contains: p } },
+        { apellidos: { contains: p } },
+        { codigo: { contains: p } },
+        { documento: { contains: p } },
+        { email: { contains: p } },
+      ]),
     };
 
     const sortBy = query.sortBy && SORTABLE_FIELDS.has(query.sortBy) ? query.sortBy : 'id';
